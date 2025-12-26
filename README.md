@@ -6,14 +6,14 @@ Production-grade multi-tier AWS infrastructure automation: from manual EC2  depl
 From Manual Console to Infrastructure as Code  
 A Complete DevOps Transformation Story | Building production-grade infrastructure with AWS, Terraform, and best practices
 
-## 📋 Project Overview  
+##  Project Overview  
 This project demonstrates my journey from creating AWS infrastructure using console  to fully automating the  Infrastructure as Code (IaC) using Terraform. It showcases:
 
-✅ End-to-end cloud architecture design  
-✅ Production-grade high availability setup  
-✅ Security best practices implementation  
-✅ Infrastructure automation and repeatability  
-✅ Cost optimization through proper resource configuration  
+- End-to-end cloud architecture design  
+- Production-grade high availability setup  
+- Security best practices implementation  
+- Infrastructure automation and repeatability  
+- Cost optimization through proper resource configuration  
 
 ## The Objective
 Migrating  PHP web application to AWS with the following requirements:
@@ -23,13 +23,24 @@ Migrating  PHP web application to AWS with the following requirements:
 3)Secure Database: Isolated RDS instance accessible only from app servers  
 4)Load Balancing: Distribute traffic across instances  
 
-## 🏗️ Architecture Overview  
+##  Architecture Overview  
 Architecture Diagram  
 ![AWS Multi-Tier Architecture](images/architecture-diagram.jpg)
 
-Security Groups:
-* Web SG: Allow SSH (22), HTTP (80) from anywhere  
-* DB SG: Allow MySQL (3306) only from Web SG  
+
+## 🛠️ Tech Stack
+
+| Category | Technologies Used |
+|----------|-------------------|
+| **Cloud Provider** | AWS (EC2, VPC, RDS, ALB, ASG, Security Groups) |
+| **Infrastructure as Code** | Terraform, HCL |
+| **Scripting** | Bash (User Data) |
+| **Web Server** | Apache HTTP Server |
+| **Application Runtime** | PHP, MySQL (mysqli extension) |
+| **Frontend** | HTML5, Bootstrap 3 |
+| **Version Control** | Git, GitHub |
+
+
 
 ## 🎯 Phase 1: Manual Console Approach (September 2025)
 
@@ -37,13 +48,13 @@ Security Groups:
 * EC2 Compute Service: Instances , Security Groups , Application Load Balancer, Auto Scaling Groups
 * RDS 
 
-**Steps Completed**
+### Steps Completed  
 
 ### 1. Security Groups Configuration  
    
 #### Web Server Security Group (web-app-server-sg):  
 - **Inbound Rules:**  
-     1) SSH (Port 22): 0.0.0.0/0 [LEARNING ONLY - Restrict in production]  
+     1) SSH (Port 22): 0.0.0.0/0 [Restricted in production]  
      2) HTTP (Port 80): 0.0.0.0/0  
 * **Outbound Rules:** All traffic allowed  
 
@@ -181,336 +192,291 @@ Time Required: ~4 hours (including troubleshooting)
 
 ### Pros:
 
-✅ Deep understanding of each AWS service
-✅ Visual interface makes learning easier
-✅ Immediate feedback
+✅ Deep understanding of each AWS service  
+✅ Visual interface makes learning easier  
+✅ Immediate feedback  
 
-### Cons:
-❌ Not repeatable or version-controlled
-❌ Risk of configuration drift
-❌ Documentation is manual and often incomplete
-❌ Difficult to replicate in another AWS account or region
+### Cons:  
+❌ Not repeatable or version-controlled  
+❌ Risk of configuration drift  
+❌ Documentation is manual and often incomplete  
+❌ Difficult to replicate in another AWS account or region  
 
-🔧 Phase 2: Infrastructure as Code with Terraform
-Why Terraform?
-Aspect	Manual Console	Terraform
-Deployment Time	4 hours	3 minutes
-Repeatability	Manual each time	Single command
-Version Control	Not possible	Git tracked
-Documentation	Separate docs	Code is documentation
-Rollback	Manual steps	terraform destroy
-Drift Detection	Manual review	terraform plan
-Team Collaboration	Error-prone	State file shared
-Terraform Project Structure
-text
-aws-terraform-ecommerce/
-├── main.tf                 # Core infrastructure code
-├── variables.tf            # Input variables
-├── outputs.tf              # Output values (ALB DNS, RDS endpoint, etc.)
-├── terraform.tfvars        # Variable values
-├── .gitignore              # Exclude sensitive files
-├── README.md               # This file
-└── docs/
+# Phase 2: Infrastructure as Code with Terraform  
+## Why Terraform?
+
+## Console vs Terraform
+
+| Aspect              | Manual using Console   | Terraform              |
+|---------------------|------------------------|------------------------|
+| Deployment Time     | 4 hours                | 3 minutes              |
+| Repeatability       | Manual each time       | Single command         |
+| Version Control     | Not possible           | Git tracked            |
+| Documentation       | Separate docs          | Code is documentation  |
+| Rollback           | Manual steps           | `terraform destroy`    |
+| Drift Detection     | Manual review          | `terraform plan`       |
+| Team Collaboration  | Error-prone            | State file shared      |
+
+### Terraform Project Structure  
+
+**aws-terraform-migration/**  
+- provider.tf               # Configures cloud provider (AWS), region, and other config  
+- main.tf                   # Core infrastructure code  
+- variables.tf              # Input variables  
+- outputs.tf                # Output values (ALB DNS, RDS endpoint, etc.)  
+- .gitignore                # Exclude sensitive files  
+-  README.md                # This file  
+└── docs
     ├── ARCHITECTURE.md
     ├── DEPLOYMENT.md
     └── TROUBLESHOOTING.md
-Terraform Code Breakdown
-1. Provider Configuration
-text
-provider "aws" {
-  region = "ap-south-1"  # Mumbai region
-}
-2. Data Sources (Referencing Existing Resources)
-text
-data "aws_vpc" "default" {
-  default = true  # Use default VPC
-}
 
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]  # All subnets in default VPC
-  }
-}
-3. Security Groups
-text
-# Web Server Security Group
-resource "aws_security_group" "web_sg" {
-  name        = "web-server-sg"
-  description = "Allow HTTP and SSH"
-  vpc_id      = data.aws_vpc.default.id
+##  Terraform Configuration
 
-  ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # ⚠️ Restrict to your IP in production
-  }
+This project uses modular Terraform files for infrastructure-as-code:
 
-  ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+| File | Purpose |
+|------|---------|
+| `provider.tf` | AWS provider configuration and region setup |  
+| `main.tf` | Core resources (VPC, security groups, RDS, ALB, ASG, launch template) |  
+| `variables.tf` | Input variables for customization (instance type, DB name, etc.) |  
+| `outputs.tf` | Exported values (ALB DNS, RDS endpoint, ASG name) |  
+| `userscript.sh` | Installs Apache, PHP, MySQL client. Creates DB config from Terraform variables. Deploys HTML form that inserts user data (name, email) into RDS MySQL                       database. Auto-creates table if missing.|    
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
+### Key Architecture Components  
 
-# Database Security Group
-resource "aws_security_group" "db_sg" {
-  name        = "mysql-prod-db-sg"
-  description = "Allow MySQL from Web SG only"
-  vpc_id      = data.aws_vpc.default.id
+- **Security Groups**: Separate SGs for web tier (HTTP/SSH) and database tier (MySQL 3306)  
+- **RDS MySQL**: Multi-AZ capable, encrypted, non-publicly accessible  
+- **Application Load Balancer**: Routes traffic to healthy EC2 instances  
+- **Auto Scaling Group**: Maintains 2–4 EC2 instances with health checks  
+- **Launch Template**: Ubuntu 24.04 LTS with Apache, PHP, and MySQL libraries  
 
-  ingress {
-    description     = "MySQL access from EC2"
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-    security_groups = [aws_security_group.web_sg.id]  # SG-to-SG rule
-  }
-}
-4. RDS MySQL Instance
-text
-resource "aws_db_instance" "default" {
-  allocated_storage      = 10
-  db_name                = "intel"
-  engine                 = "mysql"
-  engine_version         = "8.0"
-  instance_class         = "db.t3.micro"
-  username               = "admin"
-  password               = "intel123456"  # Use variables in production!
-  parameter_group_name   = "default.mysql8.0"
-  skip_final_snapshot    = true
-  publicly_accessible    = false
-  vpc_security_group_ids = [aws_security_group.db_sg.id]
-}
-5. Launch Template (EC2 Blueprint)
-text
-resource "aws_launch_template" "web_config" {
-  name_prefix   = "web-server-lt"
-  image_id      = "ami-0dee22c13ea7a9a67"  # Ubuntu 24.04 LTS (ap-south-1)
-  instance_type = "t2.micro"
+Note: All infrastructure is deployed in the default VPC with automatic resource scaling and self-healing enabled.
 
-  vpc_security_group_ids = [aws_security_group.web_sg.id]
 
-  user_data = base64encode(<<-EOF
-              #!/bin/bash
-              sudo apt update -y && sudo apt upgrade -y
-              sudo apt install apache2 -y
-              sudo systemctl enable apache2
-              sudo systemctl start apache2
-              sudo apt install php libapache2-mod-php php-mysql -y
-              sudo systemctl restart apache2
-              echo "<?php phpinfo(); ?>" > /var/www/html/index.php
-              rm /var/www/html/index.html
-              EOF
-  )
-}
-6. Application Load Balancer
-text
-resource "aws_lb" "web_lb" {
-  name               = "web-app-lb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.web_sg.id]
-  subnets            = data.aws_subnets.default.ids
-}
+### 🚀 Deployment Guide  
 
-resource "aws_lb_target_group" "web_tg" {
-  name     = "web-app-tg"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = data.aws_vpc.default.id
+I used Visual Studio as my IDE which was integrated with terraform's latest version to write my code. I used git-bash as my terminal under Visual Code . I also cloned my github repo and pushed code after testing which helped me keep a track and version control it.
+## Prerequisites  
+**1. Terraform installed on the system based on the OS**  
+Download from https://developer.hashicorp.com/terraform/install  
+
+**2. Configure AWS Credentials under the git-bash terminal of Visual Studio**   
+```bash
+aws configure
+```    
+Enter: AWS Access Key ID, Secret Access Key, Region (ap-south-1)
+
+**3. Verify installation**   
+```bash 
+terraform --version   
+aws --version
+```    
+
+
+## **Step-by-Step Deployment**   
+**Step 1: Initialize Terraform**
+   
+```bash 
+terraform init
+```  
+What it does:
+
+- Downloads AWS provider plugin   
+- Creates .terraform/ directory  
+- Initializes state management  
+
+**Step 2: Validate Configuration**  
+
+```bash
+terraform validate
+```
+Expected output:
+
+Success! The configuration is valid.  
+
+**Step 3: Review Planned Changes**
+
+```bash 
+terraform plan  
+```
+It shows the list of resources that are planned to be created or updated or deleted along with their configuration
+**Expected output:**
+
+<img src="images/terraform-plan_1.png" alt="Execution of terraform plan" width="100%">
+
+<img src="images/terraform-plan_2.png" alt="Execution of terraform plan" width="100%">
+
+
+Plan: 8 to add, 0 to change, 0 to destroy.  
+
+
+**Step 4: Apply Infrastructure**  
+```bash
+terraform apply
+```  
+Confirm: Type yes when prompted  
+
+Expected output: 
+
+<img src="images/terraform_apply_3.png" alt="Execution of terraform apply" width="100%">  
+
+Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
+
+Outputs:
+<img src="images/terraform_apply_outputs.png" alt=" displays the output that were asked for" width="100%">  
+
+**Step 5: Verifying Deployment**
+
+#### Checking for all the resources from the AWS console 
+#### - Database
+<img src="images/terraform_rds.png" alt="rds database" width="100%">  
+
+#### - Load Balancer
+<img src="images/terraform_load-balancer.png" alt="Load Balancer" width="100%">
+
+#### - Auto-scaling groups  (the ec2 instances that are set up automatically are also seen)
+<img src="images/terraform-ASG.png" alt="auto scaling group" width="100%"> 
+
+#### - Target Groups
+The targets registered by Auto scaling groups is also visible
+<img src="images/terraform-target_groups.png" alt="Target groups" width="100%">  
+
+ 
+#### Testing the web server
+- Copying the Load Balancer DNS and pasting it in browser. This opens the custom web page.Then a entry is made into it,which will be tested by connecting to the database from the EC2 instance
+- 
+<img src="images/terraform_load-balancer-DNS.png" alt="DNS Name of load balancer" width="100%">
+
+<img src="images/landing_page.png" alt="Landig page" width="100%">
+
   
-  health_check {
-    path                = "/index.php"
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 3
-    interval            = 30
+### Testing & Validation  
+**1. Database Connectivity**
+
+- SSH into the EC2 instance
+- Execute these commands:
+```bash
+sudo apt update
+sudo apt install -y mysql-client
+```
+- Connecting to the RDS endpoint;
+```bash
+mysql -h <rds-endpoint> -u <db_username> -p 
+```
+- Enter the password when prompted
+- Quering the database using these commands
+```bash
+USE intel;
+SHOW TABLES;
+SELECT * FROM contacts;
+```
+<img src="images/db-entry-check.png" alt="Checking the database for the entry made via the web-page" width="100%">
+
+
+**2. Auto-Scaling Verification**
+On Terminating an instance , ASG replaces it with a new one
+
+
+
+### **Cost Estimation**
+#### Estimated Cost Breakdown
+
+| Resource | Configuration | Hourly Cost | Monthly Cost (Est.) |
+| :--- | :--- | :--- | :--- |
+| **EC2 Instances** | 2x t2.micro | $0.0232 | ~$17.00 |
+| **RDS Database** | 1x db.t3.micro | $0.0180 | ~$13.00 |
+| **Application Load Balancer** | 1x ALB | $0.0225 | ~$16.50 |
+| **Total** | | **~$0.06** | **~$46.50** |
+
+Note: First 12 months qualify for AWS Free Tier (eligible for $0 cost)
+
+### Cleanup (Destroy Infrastructure)
+
+**Review what will be deleted**
+```bash
+terraform plan -destroy
+```
+**Delete all resources**
+```bash
+terraform destroy
+```
+Confirm: Type yes when prompted
+
+## Key Learnings  
+**Security Best Practices Implemented**   
+- Principle of Least Privilege - DB access restricted to EC2 SG only  
+- No Hardcoded Passwords - Use AWS Secrets Manager in production  
+- Multi-AZ Deployment - High availability across zones  
+- Security Groups as Firewall - Restrict SSH to known IPs in production  
+
+
+**DevOps Principles Demonstrated**  
+- Infrastructure as Code - All resources defined in code  
+- Version Control - Terraform files in Git  
+- Automation - Single terraform apply deploys entire stack   
+- Idempotency - Apply multiple times without issues  
+- Documentation - Code is self-documenting  
+
+**Scalability Features**  
+- Auto Scaling - Automatic capacity adjustment  
+- Load Balancing - Traffic distributed across instances  
+- Health Checks - Failed instances automatically replaced  
+- Multi-AZ - Availability zone redundancy  
+
+## Production Enhancements
+To enhance this project, following refinements and additions can be done:
+
+**1. Variables Management**
+Creating terraform.tfvars where we pass the value of the variables under variables.tf  
+Advantage:  
+- Reusability across environments: Same code for dev and prod but with different configurations . e.g different number of isntances .
+- No hardcoding: Removes hardcoded values that could leak in git history.   
+
+**2. HTTPS/SSL Certificate (aws_acm_certificate):**
+This Encrypts traffic between users and the ALB using HTTPS (port 443). Currently, our app only uses HTTP (port 80), which is insecure for any real data.
+```hcl
+resource "aws_acm_certificate" "example" {
+  domain_name       = "myapp.com"
+  validation_method = "DNS"
+  
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
-resource "aws_lb_listener" "front_end" {
+# Updating ALB listener to use HTTPS
+resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.web_lb.arn
-  port              = "80"
-  protocol          = "HTTP"
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS-1-2-2017-01"
+  certificate_arn   = aws_acm_certificate.example.arn
 
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.web_tg.arn
   }
 }
-7. Auto Scaling Group
-text
-resource "aws_autoscaling_group" "web_asg" {
-  desired_capacity    = 2
-  max_size            = 3
-  min_size            = 2
-  vpc_zone_identifier = data.aws_subnets.default.ids
-  target_group_arns   = [aws_lb_target_group.web_tg.arn]
 
-  launch_template {
-    id      = aws_launch_template.web_config.id
-    version = "$Latest"
+# Redirect HTTP to HTTPS
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.web_lb.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
   }
-
-  # Auto-healing configuration
-  health_check_type         = "ELB"
-  health_check_grace_period = 90
 }
-🚀 Deployment Guide
-Prerequisites
-bash
-# 1. Install Terraform
-# Download from https://www.terraform.io/downloads
-
-# 2. Configure AWS Credentials
-aws configure
-# Enter: AWS Access Key ID, Secret Access Key, Region (ap-south-1)
-
-# 3. Verify installation
-terraform --version
-aws --version
-Step-by-Step Deployment
-Step 1: Initialize Terraform
-bash
-terraform init
-What it does:
-
-Downloads AWS provider plugin
-
-Creates .terraform/ directory
-
-Initializes state management
-
-Step 2: Validate Configuration
-bash
-terraform validate
-Expected output:
-
-text
-Success! The configuration is valid.
-Step 3: Review Planned Changes
-bash
-terraform plan
-Expected output:
-
-text
-Plan: 14 to add, 0 to change, 0 to destroy.
-Step 4: Apply Infrastructure
-bash
-terraform apply
-Confirm: Type yes when prompted
-
-Expected output:
-
-text
-Apply complete! Resources: 14 added, 0 changed, 0 destroyed.
-
-Outputs:
-load_balancer_dns = "web-app-lb-1234567890.ap-south-1.elb.amazonaws.com"
-rds_endpoint = "terraform-20251215123456.abc123.ap-south-1.rds.amazonaws.com:3306"
-Step 5: Verify Deployment
-bash
-# Get ALB DNS
-terraform output load_balancer_dns
-
-# Test the web server
-curl http://web-app-lb-1234567890.ap-south-1.elb.amazonaws.com/index.php
-🔍 Testing & Validation
-1. Load Balancer Health Check
-bash
-# SSH into one instance and check Apache
-ssh -i your-key.pem ubuntu@instance-ip
-sudo systemctl status apache2
-2. Database Connectivity
-bash
-# From EC2 instance
-mysql -h terraform-20251215123456.abc123.ap-south-1.rds.amazonaws.com -u admin -p
-# Enter password: intel123456
-# Test: SHOW DATABASES;
-3. Auto-Scaling Verification
-bash
-# Terminate an instance and watch ASG replace it
-aws ec2 describe-instances | grep "InstanceId"
-aws ec2 terminate-instances --instance-ids i-1234567890abcdef0
-
-# In 2-3 minutes, a new instance should launch
-4. Health Checks
-bash
-# View target group health
-aws elbv2 describe-target-health --target-group-arn arn:aws:elasticloadbalancing:...
-💰 Cost Estimation
-Resource	Hourly Cost	Monthly Cost
-EC2 t2.micro (x2)	$0.01 × 2	~$14
-RDS db.t3.micro	$0.02	~$15
-ALB	$0.0225	~$16
-Total	~$0.05	~$45
-Note: First 12 months qualify for AWS Free Tier (eligible for $0 cost)
-
-🛑 Cleanup (Destroy Infrastructure)
-bash
-# Review what will be deleted
-terraform plan -destroy
-
-# Delete all resources
-terraform destroy
-Confirm: Type yes when prompted
-
-🎓 Key Learnings
-Security Best Practices Implemented
-✅ Principle of Least Privilege - DB access restricted to EC2 SG only
-✅ No Hardcoded Passwords - Use AWS Secrets Manager in production
-✅ Multi-AZ Deployment - High availability across zones
-✅ Security Groups as Firewall - Restrict SSH to known IPs in production
-✅ Database Backup - 7-day retention enabled
-
-DevOps Principles Demonstrated
-✅ Infrastructure as Code - All resources defined in code
-✅ Version Control - Terraform files in Git
-✅ Automation - Single terraform apply deploys entire stack
-✅ Idempotency - Apply multiple times without issues
-✅ Documentation - Code is self-documenting
-
-Scalability Features
-✅ Auto Scaling - Automatic capacity adjustment
-✅ Load Balancing - Traffic distributed across instances
-✅ Health Checks - Failed instances automatically replaced
-✅ Multi-AZ - Availability zone redundancy
-
-🔧 Production Enhancements
-To make this production-ready, add:
-
-1. Variables Management
-text
-# variables.tf
-variable "instance_count" {
-  default = 2
-}
-
-variable "database_password" {
-  sensitive = true
-  # Provide via terraform.tfvars or environment variable
-}
-2. HTTPS/SSL Certificate
-text
-# Add ACM certificate and update ALB listener to 443
-resource "aws_acm_certificate" "example" {
-  domain_name       = "yourdomain.com"
-  validation_method = "DNS"
-}
-3. Terraform Backend (Remote State)
-text
+```
+**3. Terraform Backend (Remote State)**
+For this we create a S3 bucket manually or using terraform. The bucket's name is referred inside the code under the parameter 'bucket'
 # backend.tf
 terraform {
   backend "s3" {
@@ -518,47 +484,30 @@ terraform {
     key            = "aws-infra/terraform.tfstate"
     region         = "ap-south-1"
     encrypt        = true
-    dynamodb_table = "terraform-lock"
   }
 }
-4. CloudWatch Monitoring
-text
-# monitoring.tf
-resource "aws_cloudwatch_metric_alarm" "cpu_high" {
-  alarm_name          = "web-server-cpu-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = "1"
-  metric_name         = "CPUUtilization"
-  period              = "300"
-  statistic           = "Average"
-  threshold           = "80"
-}
-📚 Resources & References
-Official Documentation
-AWS EC2 Documentation
 
-Terraform AWS Provider
+**This helps in:**
 
-AWS RDS Best Practices
+- **Team collaboration** :Multiple engineers can safely run Terraform on the same infra.  
+- **State locking** :prevents race conditions (two people applying at once).  
+- **Disaster recovery:** State backed up in S3, not on your laptop.  
+- **Encryption:**  Sensitive data (passwords, keys) encrypted at rest  
+- **Audit trail:** S3 versioning lets us see state changes over time.
 
-Learning Materials
-Terraform State Deep Dive
+**4. CloudWatch Monitoring & Alarms** 
+Continuously monitors EC2/RDS metrics and triggers alerts (SNS email, Slack, PagerDuty) when thresholds are breached.
 
-AWS Security Best Practices
+### Resources & References
 
-Auto Scaling Groups Guide
+- AWS EC2 Documentation
+- Terraform AWS Provider
+- AWS RDS Best Practices
+- AWS Security Best Practices
+- Auto Scaling Groups Guide
 
-Tools Used
-Terraform v1.0+
 
-AWS CLI v2
-
-Git for version control
-
-VS Code for editing
-
-🤝 Contributing & Feedback
-**This project demonstrates my understanding of:**   
+### **This project demonstrates my understanding of:**   
 - **Cloud architecture design**    
 - **Infrastructure automation**  
 - **Security best practices**  
@@ -575,16 +524,14 @@ Improvements welcome! Feel free to suggest enhancements via GitHub issues.
 - **License:** MIT
 
 
-📞 Contact & Links
-## Connect with me
+## 📞 Contact & Links
+### Connect with me
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Ahmad%20Saalik%20Hussain-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/ahmad-saalik-hussain)
 
+GitHub: https://github.com/ahmad-sec-sentinel
 
+Email: erahmad.saalik@gmail.com
 
-GitHub: 
+Last Updated: December 25, 2025
 
-Email: [Your Email]
-
-Last Updated: December 15, 2025
-Version: 2.0 (IaC with Terraform)
 
