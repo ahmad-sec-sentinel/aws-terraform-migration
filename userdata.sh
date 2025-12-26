@@ -10,7 +10,7 @@ systemctl start apache2
 
 cd /var/www/html
 
-# Write DB config from Terraform values
+# Writing DB config from Terraform values
 cat > dbconfig.php <<EOF
 <?php
 define('DB_SERVER',   "${rds_endpoint}");
@@ -20,7 +20,7 @@ define('DB_NAME',     "${db_name}");
 ?>
 EOF
 
-# Write your custom index.php
+# Writing custom index.php
 cat > index.php <<'PHP'
 <html>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
