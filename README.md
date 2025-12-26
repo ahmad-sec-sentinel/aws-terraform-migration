@@ -408,7 +408,8 @@ Confirm: Type yes when prompted
 - Principle of Least Privilege - DB access restricted to EC2 SG only  
 - No Hardcoded Passwords - Use AWS Secrets Manager in production  
 - Multi-AZ Deployment - High availability across zones  
-- Security Groups as Firewall - Restrict SSH to known IPs in production  
+- Security Groups as Firewall - Restrict SSH to known IPs in production
+
 
 
 **DevOps Principles Demonstrated**  
@@ -422,7 +423,42 @@ Confirm: Type yes when prompted
 - Auto Scaling - Automatic capacity adjustment  
 - Load Balancing - Traffic distributed across instances  
 - Health Checks - Failed instances automatically replaced  
-- Multi-AZ - Availability zone redundancy  
+- Multi-AZ - Availability zone redundancy
+
+## Project Challenges and How I Resolved Them  
+Building this infrastructure was not just about writing code but debugging real-world integration issues between Terraform, AWS, and Linux. Here is a log of the specific hurdles I faced and how I solved them.
+
+### 1. Managing Sensitive Files in Git  
+**The Issue**  
+When I started setting up the repository, I was unsure which files were safe to commit and which ones contained sensitive data. I specifically struggled with whether to include terraform.lock.hcl and the state files.  
+
+**The Solution**  
+I learned that terraform.tfstate contains the actual mapping of my AWS resources and often includes sensitive output data, so I added it to my .gitignore file immediately. However, I decided to keep terraform.lock.hcl in the repository. This ensures that if I clone this project on another machine, Terraform installs the exact same provider versions, preventing compatibility issues.  
+
+### 2. Connecting the App to the Database Automatically  
+**The Issue**    
+I needed my PHP application running on EC2 to talk to the RDS database. The challenge was that the database endpoint is generated dynamically by AWS only after the infrastructure is created. I could not hardcode the database address in my PHP code.  
+
+**The Solution**  
+I used a Terraform template_file approach (embedded in the User Data script). I passed the RDS endpoint, username, and password as variables from Terraform directly into the bash script. The script then generates a dbconfig.php file on the server during startup. This effectively glued the infrastructure layer to the application layer without manual intervention.  
+
+
+
+### 3. Terraform Destroy Network Errors  
+**The Issue**    
+When I tried to tear down the infrastructure using terraform destroy, the process failed at the very end. It successfully deleted the instances, auto scaling groups,launch templates and load balancers but crashed when trying to delete the Security Group. The error message was dial tcp: lookup ec2.ap-south-1.amazonaws.com: no such host.  
+
+**The Solution**  
+I analyzed the error and realized this was not a Terraform code bug but a local network resolution issue on my machine that occurred mid-process. Because the state file had already recorded the other resources as destroyed, I simply waited for my internet connection to stabilize and ran terraform destroy a second time. Terraform picked up exactly where it left off and removed the final security group.  
+
+### 4. Organizing Terraform Code  
+**The Issue**  
+As the project grew, my main.tf file became massive and difficult to read. It was hard to find specific resources like the Security Group or the Load Balancer configurations when I needed to make small edits.
+
+**The Solution**  
+I refactored the code into a modular structure. I moved the provider logic to provider.tf, variable definitions to variables.tf, and outputs to outputs.tf. This made the codebase cleaner and mimics how production-grade Terraform projects are structured in enterprise environments.
+
+
 
 ## Production Enhancements
 To enhance this project, following refinements and additions can be done:
@@ -477,7 +513,8 @@ resource "aws_lb_listener" "http" {
 ```
 **3. Terraform Backend (Remote State)**
 For this we create a S3 bucket manually or using terraform. The bucket's name is referred inside the code under the parameter 'bucket'
-# backend.tf
+### backend.tf
+```hcl
 terraform {
   backend "s3" {
     bucket         = "my-terraform-state"
@@ -486,7 +523,7 @@ terraform {
     encrypt        = true
   }
 }
-
+```
 **This helps in:**
 
 - **Team collaboration** :Multiple engineers can safely run Terraform on the same infra.  
@@ -519,7 +556,7 @@ Improvements welcome! Feel free to suggest enhancements via GitHub issues.
 ## 👤 About This Project
 
 - **Built by:** Ahmad Saalik Hussain
-- **Date:** December 2025
+- **Date:** 25th December 2025
 - **Status:** ✅ Complete & Production-Ready
 - **License:** MIT
 
@@ -527,11 +564,9 @@ Improvements welcome! Feel free to suggest enhancements via GitHub issues.
 ## 📞 Contact & Links
 ### Connect with me
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Ahmad%20Saalik%20Hussain-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/ahmad-saalik-hussain)
-
-GitHub: https://github.com/ahmad-sec-sentinel
+[![GitHub](https://img.shields.io/badge/GitHub-Ahmad%20Saalik%20Hussain-181717?style=for-the-badge&logo=github)](https://github.com/ahmad-sec-sentinel)
 
 Email: erahmad.saalik@gmail.com
-
-Last Updated: December 25, 2025
+Last Updated: December 26, 2025
 
 
