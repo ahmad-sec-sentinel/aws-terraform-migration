@@ -132,7 +132,8 @@ resource "aws_autoscaling_group" "web_asg" {
   desired_capacity    = var.desired_capacity
   max_size            = var.max_size
   min_size            = var.min_size
-  vpc_zone_identifier = data.aws_subnets.default.ids
+  vpc_zone_identifier = data.aws_subnets.default.ids   #This argument tells the ASG which subnets it can launch EC2 instances into.
+# Since subnets are tied to specific Availability Zones (AZs), this indirectly controls AZ placement of  instances.
   target_group_arns   = [aws_lb_target_group.web_tg.arn]
 
   launch_template {
